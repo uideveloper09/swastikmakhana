@@ -11,6 +11,10 @@ import type {
 import { SHOP_CATEGORY_PATH } from "@/lib/brand";
 import { CATEGORY_PER_PAGE } from "@/lib/filters";
 import {
+  fetchCategoryTreeFromSeed,
+  resolveCategoryFromSeed,
+} from "@/lib/seed-data";
+import {
   fetchPlainProductFromSeed,
   fetchPlainProductsFromSeed,
   searchPlainProductsFromSeed,
@@ -46,13 +50,7 @@ function buildQuery(
 export async function resolveCategory(
   path: string,
 ): Promise<CategoryResolveResponse | null> {
-  const res = await fetch(
-    `${getApiBase()}/categories/resolve${buildQuery({ path })}`,
-    { cache: "no-store" },
-  );
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Failed to resolve category: ${path}`);
-  return res.json();
+  return resolveCategoryFromSeed(path);
 }
 
 export async function fetchProducts(
@@ -86,19 +84,24 @@ export async function fetchProducts(
 }
 
 export async function fetchCategoryTree(): Promise<CategoryTreeNode[]> {
-  const res = await fetch(`${getApiBase()}/categories/tree`, {
-    next: { revalidate: 300 },
-  });
-  if (!res.ok) throw new Error("Failed to fetch category tree");
-  return res.json();
+  return fetchCategoryTreeFromSeed();
 }
 
 export async function fetchHomeStats(): Promise<HomeStatsResponse> {
-  const res = await fetch(`${getApiBase()}/home/stats`, {
-    next: { revalidate: 60 },
-  });
-  if (!res.ok) throw new Error("Failed to fetch home stats");
-  return res.json();
+  const { products } = await fetchPlainProductsFromSeed();
+  return {
+    total_products: products.length,
+    total_categories: 2,
+    featured_categories: [
+      {
+        id: "cat-plain",
+        name: "Plain Makhana",
+        path: "makhana/plain-makhana",
+        product_count: products.length,
+        description: "Thin plain fox nuts in 100g–250g packs",
+      },
+    ],
+  };
 }
 
 export async function searchProducts(

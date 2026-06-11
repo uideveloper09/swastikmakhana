@@ -3,6 +3,9 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
+  outputFileTracingIncludes: {
+    "/*": ["./data/**/*"],
+  },
   images: {
     remotePatterns: [],
   },
@@ -41,10 +44,12 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
+    const backend = process.env.BACKEND_URL?.replace(/\/$/, "");
+    if (!backend) return [];
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.BACKEND_URL || "http://127.0.0.1:8090"}/api/:path*`,
+        destination: `${backend}/api/:path*`,
       },
     ];
   },

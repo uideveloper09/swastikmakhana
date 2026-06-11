@@ -1,19 +1,14 @@
 import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
+import { getWritableDataPath } from "@/lib/data-path";
 import {
   isSmtpConfigured,
   sendLaunchNotifyConfirmation,
 } from "@/lib/server-email";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-const DATA_FILE = path.join(
-  process.cwd(),
-  "..",
-  "backend",
-  "data",
-  "launch_notify_subscribers.json",
-);
+const DATA_FILE = getWritableDataPath("launch_notify_subscribers.json");
 
 interface NotifyEntry {
   email: string;

@@ -1,12 +1,9 @@
 import "server-only";
 
-import { readFile } from "fs/promises";
-import path from "path";
 import { PLAIN_PACK_SIZES, SHOP_CATEGORY_PATH } from "@/lib/brand";
 import { CATEGORY_PER_PAGE } from "@/lib/filters";
+import { loadSeed } from "@/lib/seed-data";
 import type { CategoryFilters, ProductCard, ProductDetail, ProductListResponse } from "@/types/api";
-
-const SEED_PATH = path.join(process.cwd(), "..", "backend", "data", "seed.json");
 const SORT_OPTIONS = ["relevance", "price_asc", "price_desc", "rating", "discount"] as const;
 
 interface SeedProduct {
@@ -28,11 +25,10 @@ interface SeedProduct {
 }
 
 async function loadPlainProducts(): Promise<SeedProduct[]> {
-  const raw = await readFile(SEED_PATH, "utf-8");
-  const data = JSON.parse(raw) as { products: SeedProduct[] };
+  const data = await loadSeed();
   return data.products.filter((p) =>
     p.category_paths.includes(SHOP_CATEGORY_PATH),
-  );
+  ) as SeedProduct[];
 }
 
 function toCard(product: SeedProduct): ProductCard {
