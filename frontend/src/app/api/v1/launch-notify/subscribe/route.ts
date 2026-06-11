@@ -5,7 +5,6 @@ import { getWritableDataPath } from "@/lib/data-path";
 import {
   isSmtpConfigured,
   sendLaunchNotifyConfirmation,
-  smtpNotConfiguredNote,
 } from "@/lib/server-email";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -40,7 +39,7 @@ async function sendConfirmationToCustomer(
   if (!isSmtpConfigured()) {
     return {
       sent: false,
-      note: smtpNotConfiguredNote(),
+      note: "Add SMTP settings in Vercel → Settings → Environment Variables, then redeploy",
     };
   }
 
