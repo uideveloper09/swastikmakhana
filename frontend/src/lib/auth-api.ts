@@ -1,5 +1,4 @@
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
 const AUTH_KEY = "swastik-auth";
 
@@ -63,6 +62,7 @@ export async function apiSendOtp(phone: string): Promise<SendOtpResult | AuthErr
     const res = await fetch(`${API_BASE}/auth/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ phone }),
     });
     if (!res.ok) return { ok: false, error: await parseError(res) };
@@ -74,7 +74,7 @@ export async function apiSendOtp(phone: string): Promise<SendOtpResult | AuthErr
       debugOtp: data.debug_otp ?? undefined,
     };
   } catch {
-    return { ok: false, error: "Cannot reach server. Start backend on port 8080." };
+    return { ok: false, error: "Cannot reach server. Please try again." };
   }
 }
 
@@ -86,13 +86,14 @@ export async function apiVerifyOtp(
     const res = await fetch(`${API_BASE}/auth/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ phone, otp }),
     });
     if (!res.ok) return { ok: false, error: await parseError(res) };
     const data = await res.json();
     return { ok: true, token: data.token, phone: data.phone };
   } catch {
-    return { ok: false, error: "Cannot reach server. Start backend on port 8080." };
+    return { ok: false, error: "Cannot reach server. Please try again." };
   }
 }
 
