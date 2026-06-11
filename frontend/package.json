@@ -14,7 +14,8 @@
     "nodemailer": "^8.0.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "swastikmakhana": "file:.."
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
