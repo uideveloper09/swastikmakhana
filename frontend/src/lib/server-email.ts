@@ -17,6 +17,14 @@ export function isSmtpConfigured(): boolean {
   return Boolean(c.host && c.user && c.pass);
 }
 
+/** Shown in API responses when email could not be sent — never expose dev paths to customers. */
+export function smtpNotConfiguredNote(): string {
+  if (process.env.NODE_ENV === "production") {
+    return "confirmation email could not be sent right now, but you're on the list";
+  }
+  return "Add SMTP settings to frontend/.env.local (see .env.local.example)";
+}
+
 export async function sendLaunchNotifyConfirmation(
   toEmail: string,
   categoryName: string,

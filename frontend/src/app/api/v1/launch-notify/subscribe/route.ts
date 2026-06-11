@@ -5,6 +5,7 @@ import { getWritableDataPath } from "@/lib/data-path";
 import {
   isSmtpConfigured,
   sendLaunchNotifyConfirmation,
+  smtpNotConfiguredNote,
 } from "@/lib/server-email";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -39,7 +40,7 @@ async function sendConfirmationToCustomer(
   if (!isSmtpConfigured()) {
     return {
       sent: false,
-      note: "Add SMTP settings to frontend/.env.local (see .env.local.example)",
+      note: smtpNotConfiguredNote(),
     };
   }
 
