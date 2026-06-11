@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
   OTP_COOKIE_NAME,
@@ -33,15 +32,7 @@ export async function POST(request: Request) {
   const expiresIn = getOtpTtl();
   const channel = email ? "email" : "phone";
   const identity = email ?? phone!;
-
-  const cookieStore = await cookies();
-  cookieStore.set(OTP_COOKIE_NAME, createOtpCookieValue(channel, identity, otp), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: expiresIn,
-    path: "/",
-  });
+  const otpToken = createOtpCookieValue(channel, identity, otp);
 
   let emailSent = false;
   if (email) {
@@ -69,13 +60,24 @@ export async function POST(request: Request) {
     console.info(`Demo OTP for +91${phone}: ${otp}`);
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     ok: true,
     message: emailSent ? "OTP sent to your email" : "OTP sent successfully",
     email: email ?? undefined,
     phone: phone ?? undefined,
     expires_in: expiresIn,
     email_sent: emailSent,
+    otp_token: otpToken,
     debug_otp: !emailSent && allowDebugOtp() ? otp : null,
   });
+
+  response.cookies.set(OTP_COOKIE_NAME, otpToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: expiresIn,
+    path: "/",
+  });
+
+  return response;
 }

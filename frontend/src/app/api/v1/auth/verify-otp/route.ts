@@ -5,11 +5,11 @@ import {
   createSessionToken,
   validateEmail,
   validatePhone,
-  verifyOtpCookie,
+  verifyOtpToken,
 } from "@/lib/server-auth";
 
 export async function POST(request: Request) {
-  let body: { phone?: string; email?: string; otp?: string };
+  let body: { phone?: string; email?: string; otp?: string; otp_token?: string };
   try {
     body = await request.json();
   } catch {
@@ -32,25 +32,27 @@ export async function POST(request: Request) {
   const identity = email ?? phone!;
 
   const cookieStore = await cookies();
-  const otpCookie = cookieStore.get(OTP_COOKIE_NAME)?.value;
-  if (!otpCookie) {
+  const otpSession =
+    body.otp_token?.trim() || cookieStore.get(OTP_COOKIE_NAME)?.value;
+
+  if (!otpSession) {
     return NextResponse.json(
       { detail: "OTP expired. Request a new one." },
       { status: 400 },
     );
   }
 
-  if (!verifyOtpCookie(otpCookie, channel, identity, otp)) {
+  if (!verifyOtpToken(otpSession, channel, identity, otp)) {
     return NextResponse.json({ detail: "Incorrect OTP" }, { status: 400 });
   }
 
-  cookieStore.delete(OTP_COOKIE_NAME);
-
-  const token = createSessionToken(channel, identity);
-  return NextResponse.json({
+  const sessionToken = createSessionToken(channel, identity);
+  const response = NextResponse.json({
     ok: true,
-    token,
+    token: sessionToken,
     email: email ?? undefined,
     phone: phone ?? undefined,
   });
+  response.cookies.delete(OTP_COOKIE_NAME);
+  return response;
 }

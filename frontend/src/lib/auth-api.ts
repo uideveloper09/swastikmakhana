@@ -47,6 +47,7 @@ export interface SendOtpResult {
   phone?: string;
   expiresIn: number;
   emailSent?: boolean;
+  otpToken?: string;
   debugOtp?: string;
 }
 
@@ -90,6 +91,7 @@ export async function apiSendOtpByEmail(
       email: data.email,
       expiresIn: data.expires_in,
       emailSent: Boolean(data.email_sent),
+      otpToken: data.otp_token ?? undefined,
       debugOtp: data.debug_otp ?? undefined,
     };
   } catch {
@@ -100,13 +102,18 @@ export async function apiSendOtpByEmail(
 export async function apiVerifyOtpByEmail(
   email: string,
   otp: string,
+  otpToken?: string,
 ): Promise<VerifyOtpResult | AuthError> {
   try {
     const res = await fetch(`${API_BASE}/auth/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email: email.trim().toLowerCase(), otp }),
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        otp,
+        otp_token: otpToken,
+      }),
     });
     if (!res.ok) return { ok: false, error: await parseError(res) };
     const data = await res.json();

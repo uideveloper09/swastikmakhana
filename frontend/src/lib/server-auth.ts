@@ -98,8 +98,8 @@ export function createOtpCookieValue(
   });
 }
 
-export function verifyOtpCookie(
-  cookieValue: string,
+export function verifyOtpToken(
+  token: string,
   channel: OtpChannel,
   identity: string,
   otp: string,
@@ -113,7 +113,7 @@ export function verifyOtpCookie(
     phone?: string;
     otp: string;
     exp: number;
-  }>(cookieValue);
+  }>(token);
   if (!payload) return false;
 
   // Legacy phone-only cookie
@@ -126,6 +126,16 @@ export function verifyOtpCookie(
     payload.identity === identity &&
     payload.otp === code
   );
+}
+
+/** @deprecated Use verifyOtpToken — kept for cookie-based fallback */
+export function verifyOtpCookie(
+  cookieValue: string,
+  channel: OtpChannel,
+  identity: string,
+  otp: string,
+): boolean {
+  return verifyOtpToken(cookieValue, channel, identity, otp);
 }
 
 export function createSessionToken(channel: OtpChannel, identity: string): string {

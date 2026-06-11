@@ -71,6 +71,7 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [otpToken, setOtpToken] = useState("");
   const [debugOtp, setDebugOtp] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -95,6 +96,7 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
     setError("");
     setLoading(false);
     setEmailSent(false);
+    setOtpToken("");
     setDebugOtp(null);
     setResendIn(0);
   };
@@ -133,6 +135,7 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
 
     setEmail(result.email ?? trimmed.toLowerCase());
     setEmailSent(Boolean(result.emailSent));
+    setOtpToken(result.otpToken ?? "");
     setDebugOtp(result.debugOtp ?? null);
     setResendIn(30);
     setStep("otp");
@@ -147,8 +150,13 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
       return;
     }
 
+    if (!otpToken) {
+      setError("OTP session expired. Tap Resend OTP.");
+      return;
+    }
+
     setLoading(true);
-    const result = await apiVerifyOtpByEmail(email, otp);
+    const result = await apiVerifyOtpByEmail(email, otp, otpToken || undefined);
     setLoading(false);
 
     if (!result.ok) {
@@ -173,6 +181,7 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
     }
 
     setEmailSent(Boolean(result.emailSent));
+    setOtpToken(result.otpToken ?? "");
     setDebugOtp(result.debugOtp ?? null);
     setResendIn(30);
   };
@@ -358,6 +367,7 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
                         onClick={() => {
                           setStep("email");
                           setOtp("");
+                          setOtpToken("");
                           setError("");
                           setEmailSent(false);
                           setDebugOtp(null);
