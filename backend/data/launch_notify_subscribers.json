@@ -1,0 +1,20 @@
+[
+  {
+    "email": "check@test.com",
+    "category_slug": "masala-makhana",
+    "category_name": "Masala Makhana",
+    "created_at": "2026-06-11T06:54:04.629Z"
+  },
+  {
+    "email": "sanjayndls09@gmail.com",
+    "category_slug": "masala-makhana",
+    "category_name": "Masala Makhana",
+    "created_at": "2026-06-11T06:55:14.981Z"
+  },
+  {
+    "email": "sanjayndls09@gmail.com",
+    "category_slug": "roasted-makhana",
+    "category_name": "Roasted Makhana",
+    "created_at": "2026-06-11T14:01:10.956Z"
+  }
+]
