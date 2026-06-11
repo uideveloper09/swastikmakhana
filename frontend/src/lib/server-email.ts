@@ -69,3 +69,55 @@ export async function sendLaunchNotifyConfirmation(
     html,
   });
 }
+
+export async function sendNewsletterWelcome(toEmail: string): Promise<void> {
+  const c = smtpConfig();
+  if (!isSmtpConfigured()) {
+    throw new Error("SMTP not configured");
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const plain = [
+    "Namaste!",
+    "",
+    "Thanks for joining the Makhana Movement.",
+    "",
+    "You'll receive exclusive recipes, early access to new flavours, and special offers — including code SWASTIK10 for 10% off your first order.",
+    "",
+    `Shop now: ${siteUrl}`,
+    "",
+    "With warmth,",
+    "Team Swastik Makhana",
+    "Makhana Farm, Darbhanga, Bihar 846004",
+  ].join("\n");
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:520px;color:#1c1408">
+      <h2 style="color:#2c4a1e">Welcome to Swastik Makhana</h2>
+      <p>Thanks for joining the <strong>Makhana Movement</strong>.</p>
+      <p>You'll receive exclusive recipes, early access to new flavours, and special offers.</p>
+      <p style="background:#f0ead8;padding:12px 16px;border-radius:8px">
+        <strong>SWASTIK10</strong> — 10% off your first order
+      </p>
+      <p><a href="${siteUrl}" style="color:#2c4a1e">Shop now →</a></p>
+      <p style="color:#7a6550;font-size:13px">Team Swastik Makhana · Darbhanga, Bihar</p>
+    </div>
+  `;
+
+  const transporter = nodemailer.createTransport({
+    host: c.host,
+    port: c.port,
+    secure: c.port === 465,
+    auth: { user: c.user, pass: c.pass },
+    ...(c.useTls && c.port !== 465 ? { requireTLS: true } : {}),
+  });
+
+  await transporter.sendMail({
+    from: `"${c.fromName}" <${c.from}>`,
+    to: toEmail,
+    replyTo: c.from,
+    subject: "Welcome to Swastik Makhana — You're in!",
+    text: plain,
+    html,
+  });
+}
