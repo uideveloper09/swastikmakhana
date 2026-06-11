@@ -1,8 +1,5 @@
-# swastikmakhana
-Pure. Natural. Wholesome. — Swastik thin plain makhana in 100g, 150g, 200g &amp; 250g packs.
-
-
 # Swastik Makhana
+Pure. Natural. Wholesome. — Swastik thin plain makhana in 100g, 150g, 200g &amp; 250g packs**.
 
 **Pure Fox Nuts from Bihar's Finest Farms**
 
