@@ -11,6 +11,19 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Custom domain → working deployment (SMTP configured on Production)
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.swastikmakhana.co" }],
+        destination: "https://swastikmakhana-five.vercel.app/:path*",
+        permanent: false,
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "swastikmakhana.co" }],
+        destination: "https://swastikmakhana-five.vercel.app/:path*",
+        permanent: false,
+      },
       {
         source: "/pc/:path*",
         destination: "/:path*",
