@@ -3,6 +3,14 @@ import "server-only";
 import crypto from "crypto";
 
 const PHONE_RE = /^[6-9]\d{9}$/;
+const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+export type OtpChannel = "email" | "phone";
+
+export interface SessionIdentity {
+  email?: string;
+  phone?: string;
+}
 
 function getAuthSecret(): string {
   const secret = process.env.AUTH_SECRET;
@@ -41,6 +49,11 @@ export function validatePhone(raw: string): string | null {
   return PHONE_RE.test(phone) ? phone : null;
 }
 
+export function validateEmail(raw: string): string | null {
+  const email = raw.trim().toLowerCase();
+  return EMAIL_RE.test(email) ? email : null;
+}
+
 function signPayload(payload: object): string {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const sig = crypto
@@ -72,9 +85,14 @@ function verifySignedPayload<T extends { exp: number }>(token: string): T | null
   }
 }
 
-export function createOtpCookieValue(phone: string, otp: string): string {
+export function createOtpCookieValue(
+  channel: OtpChannel,
+  identity: string,
+  otp: string,
+): string {
   return signPayload({
-    phone,
+    channel,
+    identity,
     otp,
     exp: Math.floor(Date.now() / 1000) + getOtpTtlSeconds(),
   });
@@ -82,30 +100,61 @@ export function createOtpCookieValue(phone: string, otp: string): string {
 
 export function verifyOtpCookie(
   cookieValue: string,
-  phone: string,
+  channel: OtpChannel,
+  identity: string,
   otp: string,
 ): boolean {
-  const payload = verifySignedPayload<{ phone: string; otp: string; exp: number }>(
-    cookieValue,
-  );
-  if (!payload) return false;
-
   const code = otp.replace(/\D/g, "");
   if (code.length !== 4) return false;
 
-  return payload.phone === phone && payload.otp === code;
+  const payload = verifySignedPayload<{
+    channel?: OtpChannel;
+    identity?: string;
+    phone?: string;
+    otp: string;
+    exp: number;
+  }>(cookieValue);
+  if (!payload) return false;
+
+  // Legacy phone-only cookie
+  if (!payload.channel && payload.phone) {
+    return payload.phone === identity && payload.otp === code;
+  }
+
+  return (
+    payload.channel === channel &&
+    payload.identity === identity &&
+    payload.otp === code
+  );
 }
 
-export function createSessionToken(phone: string): string {
+export function createSessionToken(channel: OtpChannel, identity: string): string {
   return signPayload({
-    phone,
+    channel,
+    identity,
     exp: Math.floor(Date.now() / 1000) + getSessionTtlSeconds(),
   });
 }
 
-export function verifySessionToken(token: string): string | null {
-  const payload = verifySignedPayload<{ phone: string; exp: number }>(token);
-  return payload?.phone ?? null;
+export function verifySessionToken(token: string): SessionIdentity | null {
+  const payload = verifySignedPayload<{
+    channel?: OtpChannel;
+    identity?: string;
+    phone?: string;
+    exp: number;
+  }>(token);
+  if (!payload) return null;
+
+  if (payload.channel === "email" && payload.identity) {
+    return { email: payload.identity };
+  }
+  if (payload.channel === "phone" && payload.identity) {
+    return { phone: payload.identity };
+  }
+  if (payload.phone) {
+    return { phone: payload.phone };
+  }
+  return null;
 }
 
 export function generateOtp(): string {

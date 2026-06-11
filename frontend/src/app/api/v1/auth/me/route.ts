@@ -13,10 +13,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
   }
 
-  const phone = verifySessionToken(token);
-  if (!phone) {
+  const identity = verifySessionToken(token);
+  if (!identity) {
     return NextResponse.json({ detail: "Session expired" }, { status: 401 });
   }
 
-  return NextResponse.json({ phone });
+  return NextResponse.json(identity);
 }

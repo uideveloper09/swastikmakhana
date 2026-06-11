@@ -21,6 +21,10 @@ export function isValidPhone(raw: string): boolean {
   return /^[6-9]\d{9}$/.test(normalizePhone(raw));
 }
 
+export function isValidEmail(raw: string): boolean {
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(raw.trim());
+}
+
 export function formatPhoneDisplay(phone: string): string {
   if (phone.length === 10) {
     return `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`;
@@ -28,17 +32,29 @@ export function formatPhoneDisplay(phone: string): string {
   return phone;
 }
 
+export function formatEmailDisplay(email: string): string {
+  const at = email.indexOf("@");
+  if (at <= 1) return email;
+  const local = email.slice(0, at);
+  const domain = email.slice(at);
+  if (local.length <= 3) return email;
+  return `${local.slice(0, 2)}···${local.slice(-1)}${domain}`;
+}
+
 export interface SendOtpResult {
   ok: true;
-  phone: string;
+  email?: string;
+  phone?: string;
   expiresIn: number;
+  emailSent?: boolean;
   debugOtp?: string;
 }
 
 export interface VerifyOtpResult {
   ok: true;
   token: string;
-  phone: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface AuthError {
@@ -57,20 +73,23 @@ async function parseError(res: Response): Promise<string> {
   return res.status === 0 ? "Cannot reach server. Is the backend running?" : "Request failed";
 }
 
-export async function apiSendOtp(phone: string): Promise<SendOtpResult | AuthError> {
+export async function apiSendOtpByEmail(
+  email: string,
+): Promise<SendOtpResult | AuthError> {
   try {
     const res = await fetch(`${API_BASE}/auth/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
     });
     if (!res.ok) return { ok: false, error: await parseError(res) };
     const data = await res.json();
     return {
       ok: true,
-      phone: data.phone,
+      email: data.email,
       expiresIn: data.expires_in,
+      emailSent: Boolean(data.email_sent),
       debugOtp: data.debug_otp ?? undefined,
     };
   } catch {
@@ -78,26 +97,33 @@ export async function apiSendOtp(phone: string): Promise<SendOtpResult | AuthErr
   }
 }
 
-export async function apiVerifyOtp(
-  phone: string,
-  otp: string
+export async function apiVerifyOtpByEmail(
+  email: string,
+  otp: string,
 ): Promise<VerifyOtpResult | AuthError> {
   try {
     const res = await fetch(`${API_BASE}/auth/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ phone, otp }),
+      body: JSON.stringify({ email: email.trim().toLowerCase(), otp }),
     });
     if (!res.ok) return { ok: false, error: await parseError(res) };
     const data = await res.json();
-    return { ok: true, token: data.token, phone: data.phone };
+    return {
+      ok: true,
+      token: data.token,
+      email: data.email,
+      phone: data.phone,
+    };
   } catch {
     return { ok: false, error: "Cannot reach server. Please try again." };
   }
 }
 
-export async function apiGetMe(token: string): Promise<{ phone: string } | null> {
+export async function apiGetMe(
+  token: string,
+): Promise<{ email?: string; phone?: string } | null> {
   try {
     const res = await fetch(`${API_BASE}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },

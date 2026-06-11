@@ -14,14 +14,16 @@ const AUTH_KEY = "swastik-auth";
 
 interface StoredAuth {
   token: string;
-  phone: string;
+  email?: string;
+  phone?: string;
 }
 
 interface AuthContextValue {
+  email: string | null;
   phone: string | null;
   isAuthenticated: boolean;
   ready: boolean;
-  login: (token: string, phone: string) => void;
+  login: (token: string, identity: { email?: string; phone?: string }) => void;
   logout: () => Promise<void>;
 }
 
@@ -32,7 +34,7 @@ function loadAuth(): StoredAuth | null {
     const raw = localStorage.getItem(AUTH_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredAuth;
-    if (parsed?.token && parsed?.phone) return parsed;
+    if (parsed?.token && (parsed.email || parsed.phone)) return parsed;
   } catch {
     // ignore
   }
@@ -48,6 +50,7 @@ function saveAuth(auth: StoredAuth | null) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [email, setEmail] = useState<string | null>(null);
   const [phone, setPhone] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -60,9 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     apiGetMe(stored.token).then((me) => {
-      if (me?.phone) {
+      if (me?.email || me?.phone) {
         setToken(stored.token);
-        setPhone(me.phone);
+        setEmail(me.email ?? null);
+        setPhone(me.phone ?? null);
       } else {
         saveAuth(null);
       }
@@ -70,28 +74,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const login = useCallback((nextToken: string, nextPhone: string) => {
-    setToken(nextToken);
-    setPhone(nextPhone);
-    saveAuth({ token: nextToken, phone: nextPhone });
-  }, []);
+  const login = useCallback(
+    (nextToken: string, identity: { email?: string; phone?: string }) => {
+      setToken(nextToken);
+      setEmail(identity.email ?? null);
+      setPhone(identity.phone ?? null);
+      saveAuth({ token: nextToken, ...identity });
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     if (token) await apiLogout(token);
     setToken(null);
+    setEmail(null);
     setPhone(null);
     saveAuth(null);
   }, [token]);
 
   const value = useMemo(
     () => ({
+      email,
       phone,
-      isAuthenticated: Boolean(token && phone),
+      isAuthenticated: Boolean(token && (email || phone)),
       ready,
       login,
       logout,
     }),
-    [phone, token, ready, login, logout]
+    [email, phone, token, ready, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -17,14 +17,6 @@ export function isSmtpConfigured(): boolean {
   return Boolean(c.host && c.user && c.pass);
 }
 
-/** Shown in API responses when email could not be sent — never expose dev paths to customers. */
-export function smtpNotConfiguredNote(): string {
-  if (process.env.NODE_ENV === "production") {
-    return "confirmation email could not be sent right now, but you're on the list";
-  }
-  return "Add SMTP settings to frontend/.env.local (see .env.local.example)";
-}
-
 export async function sendLaunchNotifyConfirmation(
   toEmail: string,
   categoryName: string,
@@ -125,6 +117,54 @@ export async function sendNewsletterWelcome(toEmail: string): Promise<void> {
     to: toEmail,
     replyTo: c.from,
     subject: "Welcome to Swastik Makhana — You're in!",
+    text: plain,
+    html,
+  });
+}
+
+export async function sendLoginOtp(toEmail: string, otp: string): Promise<void> {
+  const c = smtpConfig();
+  if (!isSmtpConfigured()) {
+    throw new Error("SMTP not configured");
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const plain = [
+    "Namaste!",
+    "",
+    `Your Swastik Makhana login code is: ${otp}`,
+    "",
+    "This code expires in 5 minutes. Do not share it with anyone.",
+    "",
+    `If you didn't request this, ignore this email.`,
+    "",
+    siteUrl,
+    "",
+    "Team Swastik Makhana",
+  ].join("\n");
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:520px;color:#1c1408">
+      <h2 style="color:#2c4a1e">Your login code</h2>
+      <p style="font-size:28px;letter-spacing:6px;font-weight:bold;color:#2c4a1e">${otp}</p>
+      <p style="color:#7a6550;font-size:14px">Valid for 5 minutes. Never share this code.</p>
+      <p style="color:#7a6550;font-size:13px">Team Swastik Makhana · <a href="${siteUrl}" style="color:#2c4a1e">swastikmakhana.co</a></p>
+    </div>
+  `;
+
+  const transporter = nodemailer.createTransport({
+    host: c.host,
+    port: c.port,
+    secure: c.port === 465,
+    auth: { user: c.user, pass: c.pass },
+    ...(c.useTls && c.port !== 465 ? { requireTLS: true } : {}),
+  });
+
+  await transporter.sendMail({
+    from: `"${c.fromName}" <${c.from}>`,
+    to: toEmail,
+    replyTo: c.from,
+    subject: `${otp} is your Swastik Makhana login code`,
     text: plain,
     html,
   });

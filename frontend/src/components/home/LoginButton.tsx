@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  apiSendOtp,
-  apiVerifyOtp,
+  apiSendOtpByEmail,
+  apiVerifyOtpByEmail,
+  formatEmailDisplay,
   formatPhoneDisplay,
-  isValidPhone,
-  normalizePhone,
+  isValidEmail,
 } from "@/lib/auth-api";
 import { TRUST_FEATURES } from "@/lib/brand";
 import { OtpInput } from "./OtpInput";
@@ -59,17 +59,18 @@ interface LoginButtonProps {
   inline?: boolean;
 }
 
-type Step = "phone" | "otp";
+type Step = "email" | "otp";
 
 export function LoginButton({ inline = false }: LoginButtonProps) {
-  const { phone: loggedInPhone, isAuthenticated, login, logout } = useAuth();
+  const { email: loggedInEmail, phone: loggedInPhone, isAuthenticated, login, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [step, setStep] = useState<Step>("phone");
-  const [phone, setPhone] = useState("");
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [debugOtp, setDebugOtp] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -88,11 +89,12 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
   }, [open]);
 
   const resetForm = () => {
-    setStep("phone");
-    setPhone("");
+    setStep("email");
+    setEmail("");
     setOtp("");
     setError("");
     setLoading(false);
+    setEmailSent(false);
     setDebugOtp(null);
     setResendIn(0);
   };
@@ -114,13 +116,14 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
     e.preventDefault();
     setError("");
 
-    if (!isValidPhone(phone)) {
-      setError("Enter a valid 10-digit Indian mobile number.");
+    const trimmed = email.trim();
+    if (!isValidEmail(trimmed)) {
+      setError("Enter a valid email address.");
       return;
     }
 
     setLoading(true);
-    const result = await apiSendOtp(normalizePhone(phone));
+    const result = await apiSendOtpByEmail(trimmed);
     setLoading(false);
 
     if (!result.ok) {
@@ -128,7 +131,8 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
       return;
     }
 
-    setPhone(result.phone);
+    setEmail(result.email ?? trimmed.toLowerCase());
+    setEmailSent(Boolean(result.emailSent));
     setDebugOtp(result.debugOtp ?? null);
     setResendIn(30);
     setStep("otp");
@@ -144,7 +148,7 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
     }
 
     setLoading(true);
-    const result = await apiVerifyOtp(phone, otp);
+    const result = await apiVerifyOtpByEmail(email, otp);
     setLoading(false);
 
     if (!result.ok) {
@@ -152,7 +156,7 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
       return;
     }
 
-    login(result.token, result.phone);
+    login(result.token, { email: result.email ?? email });
     closeModal();
   };
 
@@ -160,7 +164,7 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
     setError("");
     setOtp("");
     setLoading(true);
-    const result = await apiSendOtp(phone);
+    const result = await apiSendOtpByEmail(email);
     setLoading(false);
 
     if (!result.ok) {
@@ -168,11 +172,21 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
       return;
     }
 
+    setEmailSent(Boolean(result.emailSent));
     setDebugOtp(result.debugOtp ?? null);
     setResendIn(30);
   };
 
-  if (isAuthenticated && loggedInPhone) {
+  const loggedInLabel = loggedInEmail
+    ? formatEmailDisplay(loggedInEmail)
+    : loggedInPhone
+      ? formatPhoneDisplay(loggedInPhone)
+      : null;
+  const loggedInInitials = loggedInEmail
+    ? loggedInEmail.slice(0, 2).toUpperCase()
+    : (loggedInPhone?.slice(-2) ?? "??");
+
+  if (isAuthenticated && loggedInLabel) {
     return (
       <div className="relative shrink-0">
         <button
@@ -181,10 +195,10 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
           className={`login-trigger-user ${inline ? "inline-flex w-full justify-center" : "hidden lg:inline-flex"}`}
         >
           <span className="login-trigger-user-icon" aria-hidden>
-            {loggedInPhone.slice(-2)}
+            {loggedInInitials}
           </span>
           <span className="max-w-[108px] truncate text-[11px] font-semibold">
-            {formatPhoneDisplay(loggedInPhone)}
+            {loggedInLabel}
           </span>
           <svg className="h-3 w-3 shrink-0 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -200,7 +214,7 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
             >
               <p className="px-3 py-2 text-[11px] text-theme-muted">Signed in as</p>
               <p className="px-3 pb-2 text-xs font-semibold text-theme">
-                {formatPhoneDisplay(loggedInPhone)}
+                {loggedInLabel}
               </p>
               <button
                 type="button"
@@ -254,12 +268,12 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
                 </svg>
               </button>
 
-              {step === "phone" ? (
+              {step === "email" ? (
                 <>
                   <div className="auth-modal-hero relative px-4 pb-4 pt-4 text-center">
                     <div className="auth-modal-icon mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl">
                       <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                       </svg>
                     </div>
                     <h2 id="auth-title" className="font-display text-lg font-bold text-white">
@@ -282,21 +296,18 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
                     <form className="mt-3 space-y-2.5" onSubmit={handleSendOtp}>
                       <label className="block">
                         <span className="mb-2 block text-[11px] font-semibold uppercase tracking-widest text-theme-muted">
-                          Mobile number
+                          Email address
                         </span>
-                        <div className="auth-phone-field">
-                          <span className="auth-phone-prefix">+91</span>
-                          <input
-                            type="tel"
-                            inputMode="numeric"
-                            autoComplete="tel"
-                            placeholder="Enter 10-digit number"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="h-full w-full bg-transparent px-3.5 text-sm text-theme outline-none placeholder:text-theme-muted/60"
-                            disabled={loading}
-                          />
-                        </div>
+                        <input
+                          type="email"
+                          autoComplete="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full rounded-xl border bg-transparent px-3.5 py-2.5 text-sm text-theme outline-none transition focus:ring-2 disabled:opacity-60"
+                          style={{ borderColor: "var(--border)" }}
+                          disabled={loading}
+                        />
                       </label>
                       <button type="submit" className="auth-btn-gold" disabled={loading}>
                         {loading ? "Sending OTP…" : "Continue"}
@@ -337,22 +348,23 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
 
                   <div className="auth-otp-panel flex flex-1 flex-col px-5 py-6 sm:px-7 sm:py-8">
                     <h2 id="auth-title" className="pr-8 text-xl font-bold text-white sm:text-2xl">
-                      Verify Mobile Number
+                      Verify Email
                     </h2>
 
                     <div className="mt-3 flex items-center gap-2">
-                      <span className="text-sm text-white/90 sm:text-base">{formatPhoneDisplay(phone)}</span>
+                      <span className="text-sm text-white/90 sm:text-base">{email}</span>
                       <button
                         type="button"
                         onClick={() => {
-                          setStep("phone");
+                          setStep("email");
                           setOtp("");
                           setError("");
+                          setEmailSent(false);
                           setDebugOtp(null);
                           setResendIn(0);
                         }}
                         className="text-white/60 transition hover:text-white"
-                        aria-label="Edit mobile number"
+                        aria-label="Edit email address"
                         disabled={loading}
                       >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -374,6 +386,12 @@ export function LoginButton({ inline = false }: LoginButtonProps) {
                       <div className="mt-3">
                         <OtpInput value={otp} onChange={setOtp} disabled={loading} variant="dark" />
                       </div>
+
+                      {emailSent && (
+                        <p className="mt-3 text-center text-[11px] text-white/70">
+                          OTP sent to your inbox. Check spam/promotions too.
+                        </p>
+                      )}
 
                       {debugOtp && (
                         <p className="mt-3 text-center text-[11px] text-accent-light">
