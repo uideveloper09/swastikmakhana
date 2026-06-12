@@ -128,7 +128,7 @@
   html {
     scroll-behavior: smooth;
     overflow-x: clip;
-    min-height: 100%;
+    height: auto;
   }
 
   body {
@@ -136,7 +136,8 @@
     color: var(--text);
     overflow-x: clip;
     max-width: 100%;
-    min-height: 100%;
+    width: 100%;
+    min-height: 0;
 
     @apply font-sans antialiased;
 
@@ -145,11 +146,35 @@
   }
 
   .site-shell {
-    @apply flex min-h-dvh flex-col;
+    @apply flex min-h-svh flex-col;
   }
 
   .site-main {
     @apply flex-1 overflow-x-clip;
+  }
+
+  .site-overlays {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    width: 100%;
+    height: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .site-overlays > * {
+    pointer-events: auto;
+  }
+
+  .theme-fixed-toggle {
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 640px) {
+    .theme-fixed-toggle {
+      bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    }
   }
 
 
@@ -1607,7 +1632,20 @@
   }
 
   .site-footer {
-    @apply mt-auto shrink-0 overflow-x-clip bg-midnight py-10 sm:py-12 lg:py-14;
+    @apply mt-auto shrink-0 overflow-x-clip bg-midnight pt-10 sm:pt-12 lg:pt-14;
+    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 640px) {
+    .site-footer {
+      padding-bottom: calc(3rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer {
+      padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    }
   }
 
   .site-footer-inner {
@@ -2089,7 +2127,14 @@
   }
 
   .live-chat-root {
-    @apply fixed bottom-5 right-4 z-50 flex max-w-[calc(100vw-1rem)] flex-col items-end sm:bottom-6 sm:right-6 sm:max-w-[calc(100vw-3rem)];
+    @apply fixed right-4 z-50 flex max-w-[calc(100vw-1rem)] flex-col items-end sm:right-6 sm:max-w-[calc(100vw-3rem)];
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 640px) {
+    .live-chat-root {
+      bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    }
   }
 
   .live-chat-fab {

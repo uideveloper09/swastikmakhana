@@ -68,7 +68,7 @@ export function ThemeToggle({ variant = "fixed" }: ThemeToggleProps) {
   }
 
   return (
-    <div className="theme-fixed-toggle fixed bottom-5 left-4 z-40 sm:bottom-6 sm:left-6">
+    <div className="theme-fixed-toggle fixed left-4 z-40 sm:left-6">
       {toggleOnly}
     </div>
   );

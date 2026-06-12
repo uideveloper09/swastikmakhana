@@ -6,9 +6,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { AppBootLoader } from "@/components/AppBootLoader";
-import { LiveChat } from "@/components/LiveChat";
 import { NavigationLoader } from "@/components/NavigationLoader";
-import { ThemeToggle } from "@/components/home/ThemeToggle";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -21,8 +19,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <NavigationLoader />
             </Suspense>
             {children}
-            <LiveChat />
-            <ThemeToggle variant="fixed" />
           </CartProvider>
         </WishlistProvider>
       </AuthProvider>
