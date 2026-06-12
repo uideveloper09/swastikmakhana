@@ -4,10 +4,9 @@ import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 
 import { AnnouncementBar } from "@/components/home/AnnouncementBar";
 
-import { LiveChat } from "@/components/LiveChat";
 import { PremiumFooter } from "@/components/home/PremiumFooter";
 import { PremiumHeader } from "@/components/home/PremiumHeader";
-import { ThemeToggle } from "@/components/home/ThemeToggle";
+import { SiteOverlays } from "@/components/SiteOverlays";
 
 import { Providers } from "@/components/Providers";
 
@@ -98,13 +97,9 @@ export default function RootLayout({
             <main className="site-main">{children}</main>
 
             <PremiumFooter />
-
-            <div className="site-overlays">
-              <LiveChat />
-              <ThemeToggle variant="fixed" />
-            </div>
           </div>
 
+          <SiteOverlays />
         </Providers>
 
       </body>

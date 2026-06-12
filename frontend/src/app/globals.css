@@ -128,7 +128,7 @@
   html {
     scroll-behavior: smooth;
     overflow-x: clip;
-    height: auto;
+    background-color: var(--midnight);
   }
 
   body {
@@ -137,7 +137,7 @@
     overflow-x: clip;
     max-width: 100%;
     width: 100%;
-    min-height: 0;
+    margin: 0;
 
     @apply font-sans antialiased;
 
@@ -145,30 +145,33 @@
 
   }
 
+  /* iOS Safari: trap scroll on body so fixed UI cannot extend page height */
+  @supports (-webkit-touch-callout: none) {
+    html {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: clip;
+      overscroll-behavior-y: none;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
   .site-shell {
-    @apply flex min-h-svh flex-col;
+    @apply flex flex-col;
   }
 
   .site-main {
-    @apply flex-1 overflow-x-clip;
-  }
-
-  .site-overlays {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    width: 100%;
-    height: 0;
-    overflow: visible;
-    pointer-events: none;
-  }
-
-  .site-overlays > * {
-    pointer-events: auto;
+    @apply overflow-x-clip;
   }
 
   .theme-fixed-toggle {
     bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    transform: translateZ(0);
   }
 
   @media (min-width: 640px) {
@@ -1632,7 +1635,7 @@
   }
 
   .site-footer {
-    @apply mt-auto shrink-0 overflow-x-clip bg-midnight pt-10 sm:pt-12 lg:pt-14;
+    @apply shrink-0 overflow-x-clip bg-midnight pt-10 sm:pt-12 lg:pt-14;
     padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
   }
 
@@ -2129,6 +2132,7 @@
   .live-chat-root {
     @apply fixed right-4 z-50 flex max-w-[calc(100vw-1rem)] flex-col items-end sm:right-6 sm:max-w-[calc(100vw-3rem)];
     bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    transform: translateZ(0);
   }
 
   @media (min-width: 640px) {
