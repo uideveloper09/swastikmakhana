@@ -1,4 +1,4 @@
-import { REVIEWS } from "@/lib/brand";
+import { REVIEWS, REVIEW_SUMMARY } from "@/lib/brand";
 import { SectionHeader } from "./SectionHeader";
 
 export function ReviewsSection() {
@@ -7,14 +7,14 @@ export function ReviewsSection() {
       <div className="site-container">
         <SectionHeader
           label="What Customers Say"
-          title="Loved Across India"
+          title="Loved in Delhi NCR"
           extra={
             <div className="mt-2 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
               <span className="text-lg" style={{ color: "var(--star)" }}>
                 ★★★★★
               </span>
               <span className="font-display text-lg text-theme-secondary">
-                4.9 / 5 from 2,800+ reviews
+                {REVIEW_SUMMARY.rating} from {REVIEW_SUMMARY.countLabel}
               </span>
             </div>
           }

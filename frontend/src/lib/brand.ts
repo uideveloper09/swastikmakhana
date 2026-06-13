@@ -76,26 +76,31 @@ export const WHY_CHOOSE = [
 export const REVIEWS = [
   {
     name: "Rahul Verma",
-    location: "Delhi",
+    location: "South Delhi",
     rating: 5,
-    text: "The thin plain makhana is so light and crisp — perfect for evening snacking. Ordered the 200g pack twice already. Packaging keeps it fresh!",
+    text: "The thin plain makhana is so light and crisp — perfect for evening snacking. Got the 200g pack delivered in South Delhi within a day. Packaging keeps it fresh!",
     avatar: "#6B4226",
   },
   {
     name: "Dr. Anjali Mishra",
-    location: "Bangalore",
+    location: "Gurgaon",
     rating: 5,
-    text: "As a nutritionist, I'm thrilled to recommend a makhana brand I trust. High protein, zero junk, and they support local farmers. Incredible!",
+    text: "As a nutritionist in Gurgaon, I'm happy to recommend a makhana brand I trust. High protein, zero junk, and quick NCR delivery every time.",
     avatar: "#8B5E3C",
   },
   {
     name: "Priya Sharma",
-    location: "Mumbai",
+    location: "Noida",
     rating: 5,
-    text: "The crunch is incredible! Best plain makhana I've ever had. My whole family loves the 150g pack. Swastik is now a pantry staple!",
+    text: "The crunch is incredible! Best plain makhana I've had in Noida. My whole family loves the 150g pack — Swastik is now a pantry staple!",
     avatar: "#5A3A28",
   },
 ] as const;
+
+export const REVIEW_SUMMARY = {
+  rating: "4.9 / 5",
+  countLabel: "180+ Delhi NCR reviews",
+} as const;
 
 export const MAHANA_ROOT_PATH = "makhana";
 export const SHOP_CATEGORY_PATH = "makhana/plain-makhana";
